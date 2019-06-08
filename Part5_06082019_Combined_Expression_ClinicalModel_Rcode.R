@@ -125,11 +125,22 @@ PlotROCSaveJPG <- function(roc.obj, path, file.name, ml.algo){
 ########################################################################################
 
 #########
-setwd("D:/miRNA_Prj/0520_plot2RocAuc/")
 
-count <- read.table("expression_count.txt", row.names = 1, header = T, sep = "\t")
+
+
+#########
+setwd("C:/Users/dug/OneDrive - QIAGEN GmbH/SVM_RFE_Prj/0604")
+
+count <- read.table("Counts.Data.txt", row.names = 1, header = T, sep = "\t")
+design <- read.table("Counts.Data_Design.txt", row.names = 1, header = T, sep = "\t")
 clinical.data <- read.table("Clinical_Data.txt", row.names = 1, header = T, sep = "\t")
-top.genes <- readLines("Deseq2_top45rows.txt")
+top.genes <- readLines("Deseq2_top47row.txt")
+
+
+# setwd("D:/miRNA_Prj/0520_plot2RocAuc/")
+# count <- read.table("expression_count.txt", row.names = 1, header = T, sep = "\t")
+# clinical.data <- read.table("Clinical_Data.txt", row.names = 1, header = T, sep = "\t")
+# top.genes <- readLines("Deseq2_top45rows.txt")
 
 
 top.genes[1:10] 
@@ -539,7 +550,7 @@ set.seed(100)
 model_svmLinear = train(class ~ ., 
                         data=trainData, 
                         method='svmLinear', 
-                        tuneLength = 5, 
+                        tuneLength = 8, 
                         metric='ROC', 
                         trControl = fitControl
                         )
@@ -551,17 +562,11 @@ set.seed(100)
 model_svmLinear.valid = train(class ~ ., 
                         data=testData, 
                         method='svmLinear', 
-                        tuneLength = 5, 
+                        tuneLength = 8, 
                         metric='ROC', 
                         trControl = fitControl
                         )
 
-summary(testData)
-str(testData)
-str(trainData)
-head(testData)
-dim(testData)
-dim(trainData)
 
 #############################
 ## briefly check the svmLinear results
@@ -583,11 +588,12 @@ plot(varimp_svmLinear, main="Variable Importance of Merged Data with svmLinear")
 rocobj_svmlinear <- roc(model_svmLinear$pred$obs, model_svmLinear$pred$yes, ci=TRUE,
                         plot=TRUE, 
                         legacy.axes=TRUE, percent=TRUE,
-                        main="svmLinear",
+                        main="Combined Model svmLinear",
                         xlab="False Positive Percentage", 
                         ylab="True Postive Percentage", 
                         col="darkblue", lwd=5, 
-                        print.auc=TRUE)
+                        print.auc=TRUE,
+                        print.auc.y = 25)
 
 rocobj_svmlinear.vliad <- roc(model_svmLinear.valid$pred$obs, model_svmLinear.valid$pred$yes, ci=TRUE,
                         plot=TRUE, 
@@ -598,6 +604,7 @@ rocobj_svmlinear.vliad <- roc(model_svmLinear.valid$pred$obs, model_svmLinear.va
                         col="red", lwd=5,
                         
                         print.auc=TRUE,
+                        print.auc.y = 35,
                         add=TRUE)
 
 
@@ -1074,7 +1081,7 @@ fitControl <- trainControl(
 algorithmList <- c('rf', 'knn', 'earth', 'xgbDART', 'svmRadial', 'svmLinear')
 
 # a quick test for algorithm list 
- algorithmList <- c('rf', 'knn', 'svmRadial', 'svmLinear')
+# algorithmList <- c('rf', 'knn', 'svmRadial', 'svmLinear', 'earth')
 
 ################################################################################
 ## Run all algorithms in the list: 
@@ -1095,6 +1102,28 @@ merged.models.valid <- caretList(class ~ .,
                            trControl=fitControl, 
                            methodList=algorithmList
                           ) 
+
+
+
+################################################################# 
+#  alternatively, we can use traniControl; 
+set.see(100)
+
+merged.models <- caretList(class ~ ., 
+                           data=trainData, 
+                           metric='ROC',
+                           trControl=trainControl, 
+                           methodList=algorithmList
+                          ) 
+
+
+set.seed(100)
+merged.models.valid <- caretList(class ~ ., 
+                                 data=testData, 
+                                 metric='ROC',
+                                 trControl=trainControl, 
+                                 methodList=algorithmList
+                                ) 
 
 ## sumarize resample results from 
 summary( resamples(merged.models.valid) )
@@ -1149,6 +1178,7 @@ rocobj_models <- roc(merged.models$rf$pred$obs,
                      ci=TRUE,
                      plot=TRUE, 
                      legacy.axes=TRUE, percent=TRUE, 
+                     main = "Combined Data Multi Model ROCs",
                      xlab="False Positive Percentage", 
                      ylab="True Postive Percentage", 
                      col="darkblue", lwd=4, 
@@ -1223,18 +1253,18 @@ rocobj_models <- roc(merged.models$knn$pred$obs,
                      add = TRUE
 )
 
-rocobj_models <- roc(merged.models$ada$pred$obs, 
-                     merged.models$ada$pred$yes, 
-                     ci=TRUE,
-                     plot=TRUE, 
-                     legacy.axes=TRUE, percent=TRUE, 
-                     xlab="False Positive Percentage", 
-                     ylab="True Postive Percentage", 
-                     col="purple", lwd=4, 
-                     print.auc=TRUE,
-                     print.auc.y = 64,
-                     add = TRUE
-)
+# rocobj_models <- roc(merged.models$ada$pred$obs, 
+#                     merged.models$ada$pred$yes, 
+#                     ci=TRUE,
+#                     plot=TRUE, 
+#                     legacy.axes=TRUE, percent=TRUE, 
+#                     xlab="False Positive Percentage", 
+#                     ylab="True Postive Percentage", 
+#                     col="purple", lwd=4, 
+#                     print.auc=TRUE,
+#                     print.auc.y = 64,
+#                     add = TRUE
+#                     )
 
 
 legend("bottomright", 
