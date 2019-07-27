@@ -444,6 +444,15 @@ featurePlot(x = trainData[, 1:15],
 
 
 
+### 
+## Plot correlation of clinical variables
+## we have to make sure there's no bias variables introduced into the model. 
+
+library(corrplot)
+corrplot( cor(clinical.data), method = "square", tl.cex = 0.5)
+
+
+
 ##########################################################################################################  
 ##### 
 ##### Section V: RFE 
